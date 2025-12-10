@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Английские квесты </title>
+  <style>
+    :root {
+      --bg: #fffaf7;
+      --card-bg: #ffffff;
+      --accent: #8ac926;
+      --price: #ff9eaa;
+      --text: #4a4a4a;
+      --text-light: #777;
+      --shadow: 0 6px 20px rgba(0,0,0,0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    #cloudCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      margin-bottom: 45px;
+      color: var(--accent);
+      font-weight: 800;
+      text-shadow: 0 1px 3px rgba(138, 201, 38, 0.15);
+      letter-spacing: -0.5px;
+    }
+
+    .quests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 32px;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: 
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.35s ease,
+        background 0.3s ease;
+      opacity: 0;
+      transform: translateY(30px);
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-10px) scale(1.025);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.14);
+      background: #fffdfd;
+      z-index: 20;
+    }
+
+    .product-image {
+      width: 100%;
+      height: 180px; /* ← увеличено до 180px */
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .product-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .product-level {
+      font-size: 0.87rem;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .product-desc {
+      font-size: 0.94rem;
+      margin-bottom: 16px;
+      line-height: 1.55;
+      color: #555;
+    }
+
+    .product-price {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--price);
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .btn-buy {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 11px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.25s, transform 0.2s;
+    }
+
+    .btn-buy:hover {
+      background: #70b020;
+      transform: scale(1.03);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 250, 247, 0.96);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s, visibility 0.4s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      width: 92%;
+      max-width: 600px;
+      border-radius: var(--radius);
+      box-shadow: 0 16px 50px rgba(0,0,0,0.15);
+      overflow: hidden;
+      position: relative;
+      border: 3px solid var(--price);
+    }
+
+    .modal-header {
+      background: var(--accent);
+      color: white;
+      padding: 22px 24px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: white;
+      color: var(--accent);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      font-weight: bold;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-screenshot {
+      display: inline-block;
+      width: 75px;
+      height: 55px;
+      background: linear-gradient(135deg, #ffecf0, #e3f2fd);
+      border-radius: 8px;
+      margin: 0 6px 8px 0;
+      font-size: 0.75rem;
+      color: var(--text);
+      text-align: center;
+      line-height: 55px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .modal-actions {
+      padding: 0 24px 24px;
+    }
+
+    .modal-actions button {
+      width: 100%;
+      padding: 13px;
+      background: var(--price);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .modal-actions button:hover {
+      background: #ff7fa0;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 35px;
+      }
+      .product-card {
+        padding: 20px;
+      }
+      .product-image {
+        height: 150px; /* ← чуть компактнее на мобильных */
+      }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="cloudCanvas"></canvas>
+
+<div class="content">
+  <h1>Английские квесты☁️</h1>
+  <div class="quests-grid" id="questsGrid"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="modal-title">Название</h2>
+      <button class="modal-close" id="modalClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="modal-desc"></p>
+      <div id="modalScreenshots"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="modalOrderBtn">Записаться на квест</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === Canvas: Animated Clouds ===
+  const canvas = document.getElementById('cloudCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  class Cloud {
+    constructor() {
+      this.reset();
+      this.speed = 0.2 + Math.random() * 0.6;
+      this.size = 0.6 + Math.random() * 0.8;
+      this.opacity = 0.25 + Math.random() * 0.2;
+    }
+
+    reset() {
+      this.x = -100;
+      this.y = 50 + Math.random() * (canvas.height - 200);
+    }
+
+    update() {
+      this.x += this.speed;
+      if (this.x > canvas.width + 100) this.reset();
+    }
+
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.translate(this.x, this.y);
+      ctx.scale(this.size, this.size);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 25, 0, Math.PI * 2);
+      ctx.arc(-20, -8, 18, 0, Math.PI * 2);
+      ctx.arc(22, -10, 20, 0, Math.PI * 2);
+      ctx.arc(10, 10, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
+  const clouds = Array.from({ length: 8 }, () => new Cloud());
+
+  function animateClouds() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, '#fffaf7');
+    grad.addColorStop(1, '#fff7fa');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    clouds.forEach(cloud => {
+      cloud.update();
+      cloud.draw();
+    });
+
+    requestAnimationFrame(animateClouds);
+  }
+
+  animateClouds();
+
+  // === Quest Data WITH IMAGES ===
+  const quests = [
+    {
+      title: "Lost in London",
+      level: "A2",
+      age: "8–12 лет",
+      price: "490 ₽",
+      desc: "Помоги туристу найти путь в Британский музей! Используй Present Simple, предлоги места и базовую лексику по теме «Город». Интерактивные задания, мини-игры и карта Лондона в подарок!",
+      screenshots: 3,
+      image: "images/lost-in-london.jpg"
+    },
+    {
+      title: "The Magic Spellbook",
+      level: "A2–B1",
+      age: "10–14 лет",
+      price: "590 ₽",
+      desc: "Книга заклинаний украдена! Чтобы её вернуть, нужно правильно составить предложения в Present Continuous и отгадать загадки на английском. Атмосферная графика, аудиозадания и бонус за 100% выполнение.",
+      screenshots: 2,
+      image: "images/magic-spellbook.jpg"
+    },
+    {
+      title: "Mission: Space English",
+      level: "A1–A2",
+      age: "7–10 лет",
+      price: "390 ₽",
+      desc: "Стань космонавтом и выучи английские слова по теме «Космос и технологии»! Задания на matching, listening и простые диалоги. Подходит даже для начинающих.",
+      screenshots: 3,
+      image: "images/space-english.jpg"
+    },
+    {
+      title: "Detective Watson’s Case",
+      level: "B1",
+      age: "12–16 лет",
+      price: "690 ₽",
+      desc: "Расследуй пропажу кота миссис Хадсон! Используй Past Simple, вопросительные конструкции и логику. Идеально для повторения времён и развития speaking через ролевые задания.",
+      screenshots: 2,
+      image: "images/detective-watson.jpg"
+    },
+    {
+      title: "Cat After School",
+      level: "A1–A2",
+      age: "6–10 лет",
+      price: "350 ₽",
+      desc: "Шаловливый котик остался после уроков. Чтобы выйти из класса, ему нужно выполнить задания у доски и на планшете! Игровая механика, поощрение за старание и несколько финалов.",
+      screenshots: 3,
+      image: "images/cat-after-school.jpg"
+    }
+  ];
+
+  // === Render Cards ===
+  const grid = document.getElementById('questsGrid');
+
+  quests.forEach((quest, index) => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <img src="${quest.image}" alt="Иллюстрация к квесту «${quest.title}»" class="product-image">
+      <h3>${quest.title}</h3>
+      <p class="product-level">Уровень: ${quest.level} • ${quest.age}</p>
+      <p class="product-desc">${quest.desc}</p>
+      <p class="product-price">${quest.price}</p>
+      <button class="btn-buy">Подробнее</button>
+    `;
+
+    setTimeout(() => {
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 200 + index * 140);
+
+    card.addEventListener('click', () => openModal(quest));
+    card.querySelector('.btn-buy').addEventListener('click', e => {
+      e.stopPropagation();
+      openModal(quest);
+    });
+
+    grid.appendChild(card);
+  });
+
+  // === Modal ===
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDesc = document.getElementById('modal-desc');
+  const modalScreenshots = document.getElementById('modalScreenshots');
+  const modalClose = document.getElementById('modalClose');
+  const modalOrderBtn = document.getElementById('modalOrderBtn');
+
+  function openModal(quest) {
+    modalTitle.textContent = quest.title;
+    modalDesc.textContent = quest.desc;
+    modalScreenshots.innerHTML = '';
+    for (let i = 1; i <= quest.screenshots; i++) {
+      const el = document.createElement('div');
+      el.className = 'modal-screenshot';
+      el.textContent = `Скрин ${i}`;
+      modalScreenshots.appendChild(el);
+    }
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    modalOrderBtn.onclick = () => {
+      alert(`✨ Вы выбрали квест:\n«${quest.title}»\n\nНапишите мне в Telegram — и мы начнём приключение!`);
+      closeModal();
+    };
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => e.target === modal && closeModal());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+</script>
+</body>
+</html>
